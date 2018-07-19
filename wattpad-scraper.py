@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
+# coding: utf8
 
 from sys import argv
 from urllib.request import Request, urlopen
@@ -40,17 +40,17 @@ if __name__ == '__main__':
     i = 1
 
     soup = parse_soup(URL)
-    title = soup.title.string
+    title = str(soup.title.string).encode("utf-8", 'ignore').decode("utf-8")
     story = []
     while i == 1 or (str(i) in soup.title.string):
-        print(soup.title.string)
+        print(soup.title.string.encode("utf-8", 'ignore').decode("utf-8"))
         article_texts = soup.findAll(attrs={'data-p-id': True})
-        chapter = u"\n".join(html.unescape(t.text).replace('•••', '').strip() for t in article_texts)
+        chapter = u"\n".join(html.unescape(t.text).replace(u'\u2022' * 3, '').strip() for t in article_texts)
         story.append(chapter)
 
         i += 1
         page = URL + f'/page/{i}'
         soup = parse_soup(page)
 
-    with open(f"{title}.txt", 'w') as FH:
+    with open(f"{title}.txt", 'w', encoding='utf8') as FH:
         FH.writelines(story)
