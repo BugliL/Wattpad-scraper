@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # coding: utf8
-
+import time
 from sys import argv
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup, Comment
@@ -29,29 +29,77 @@ import flask
 # SOFTWARE.
 
 def parse_soup(url):
+    time.sleep(2)
     MOZILLA = {'User-Agent': 'Mozilla/5.0'}
     req = Request(url, headers=MOZILLA)
     html_content = urlopen(req).read()
     return BeautifulSoup(html_content, 'html.parser')
 
 
-def get_story(soup):
-    story = []
-    title = str(soup.title.string).encode("ascii", 'ignore').decode("utf-8").partition("-")[0].strip()
-    while soup:
-        article_texts = soup.findAll(attrs={'data-p-id': True})
-        chapter = u"\n".join(html.unescape(t.text).replace(u'\u2022' * 3, '').strip() for t in article_texts)
-        story.append(chapter)
+def get_story(url, soup):
+    def strip_url(url):
+        return url if url[-1] != '/' else url[:-1]
 
-        next_page_url = get_next_page_url(soup)
-        soup = parse_soup(next_page_url) if next_page_url else None
+    def parse_title(soup):
+        return str(soup.title.string).encode("ascii", 'ignore').decode("utf-8").partition("-")[0].strip()
+
+    def parse_chapter_title(soup):
+        article = soup.find('article')
+        title_h2 = article.find('h2').text.strip()
+        return title_h2
+
+    def write_row(next_page_url):
+        return "\n{}\n".format(str(next_page_url))
+
+    def parse_text(soup):
+        return ['\n' + p.text.strip() for p in soup.findAll(attrs={'data-p-id': True})]
+
+    def soup_or_none(page_url):
+        return parse_soup(page_url) if page_url else None
+
+    def create_page_string(i):
+        return '/page/{}'.format(str(i))
+
+    def parse_page_text(page_url):
+        page = soup_or_none(page_url)
+        page_text = parse_text(page)
+        return page_text
+
+    title = parse_title(soup)
+    story = ['\n', title, '\n', ]
+    next_chapter_url = strip_url(url)
+    while soup:
+        chapter_title = parse_chapter_title(soup)
+        story.append(write_row(chapter_title))
+
+        # Parse base page
+        print(next_chapter_url)
+        page = soup_or_none(next_chapter_url)
+        page_text = parse_text(page)
+        story += page_text
+
+        # Parse next pages
+        i = 2
+        page_url = next_chapter_url + create_page_string(i)
+        page_text = parse_page_text(page_url)
+        while not all(row in story for row in page_text):
+            print(page_url)
+            story += page_text
+
+            i += 1
+            page_url = next_chapter_url + create_page_string(i)
+            page_text = parse_page_text(page_url)
+
+        next_chapter_url = get_next_page_url(soup)
+        soup = soup_or_none(next_chapter_url)
+        story.append(write_row(next_chapter_url))
 
     return title, story
 
 
 def get_next_page_url(soup):
     link = soup.find('a', class_="next-part-link", href=True)
-    return link['href']
+    return link['href'] if link else None
 
 
 if __name__ == '__main__':

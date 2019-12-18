@@ -11,7 +11,7 @@ app = flask.Flask(__name__)
 def download_txt():
     url = request.form['url']
     soup = parse_soup(url)
-    title, story = get_story(soup)
+    title, story = get_story(url, soup)
 
     with tempfile.NamedTemporaryFile('w', encoding='utf8', delete=False) as temp:
         temp.writelines(story)
