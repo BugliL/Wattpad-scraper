@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 # coding: utf8
+import re
 import time
+import urllib
 from sys import argv
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup, Comment
@@ -29,29 +31,39 @@ import flask
 # SOFTWARE.
 
 def parse_soup(url):
-    time.sleep(2)
+    attempt = 0
     MOZILLA = {'User-Agent': 'Mozilla/5.0'}
-    req = Request(url, headers=MOZILLA)
-    html_content = urlopen(req).read()
-    return BeautifulSoup(html_content, 'html.parser')
+
+    while True:
+        try:
+            req = Request(url, headers=MOZILLA)
+            html_content = urlopen(req).read()
+            return BeautifulSoup(html_content, 'html.parser')
+        except urllib.error.HTTPError:
+            if attempt > 3:
+                raise
+
+            attempt += 1
 
 
 def get_story(url, soup):
     def strip_url(url):
+        url = re.sub(r"/page/\d+", '', url)
         return url if url[-1] != '/' else url[:-1]
 
     def parse_title(soup):
         return str(soup.title.string).encode("ascii", 'ignore').decode("utf-8").partition("-")[0].strip()
 
     def parse_chapter_title(soup):
-        article = soup.find('article')
-        title_h2 = article.find('h2').text.strip()
-        return title_h2
+        return soup.find('article').find('h2').text.strip()
 
     def write_row(next_page_url):
-        return "\n{}\n".format(str(next_page_url))
+        return "\n{}".format(str(next_page_url))
 
     def parse_text(soup):
+        for br in soup.find_all("br"):
+            br.replace_with("\n")
+
         return ['\n' + p.text.strip() for p in soup.findAll(attrs={'data-p-id': True})]
 
     def soup_or_none(page_url):
@@ -68,7 +80,7 @@ def get_story(url, soup):
     title = parse_title(soup)
     story = ['\n', title, '\n', ]
     next_chapter_url = strip_url(url)
-    while soup:
+    while soup and soup.find('article'):
         chapter_title = parse_chapter_title(soup)
         story.append(write_row(chapter_title))
 
