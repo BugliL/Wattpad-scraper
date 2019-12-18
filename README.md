@@ -1,13 +1,17 @@
 # Watpadd scraper
 Script that can download stories from www.Wattpad.com
 
-### Prerequisites
-```
-Python 3.5+
-beautifulsoup4==4.6.0
+### Install Prerequisites
+```bash
+pip install -r requirements
 ```
 
-### Run
+### Run On Windows
+Double click on run.bat
+
+### Run on Linux
+Run main.py and visit the webserverat [127.0.0.1:8059](http://127.0.0.1:8059/)  
+or if u want to use command line
 ```
-$ python3 wattpad-scraper.py <url_first_chapter>
+$ python3 wattpad_scraper.py <url_first_chapter>
 ```
