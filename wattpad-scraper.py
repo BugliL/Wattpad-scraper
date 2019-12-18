@@ -35,14 +35,10 @@ def parse_soup(url):
     return BeautifulSoup(html_content, 'html.parser')
 
 
-if __name__ == '__main__':
-
-    URL = argv[1]
-    i = 1
-
-    soup = parse_soup(URL)
-    title = str(soup.title.string).encode("ascii", 'ignore').decode("utf-8").partition("-")[0].strip()
+def get_story(soup):
     story = []
+    i = 1
+    title = str(soup.title.string).encode("ascii", 'ignore').decode("utf-8").partition("-")[0].strip()
     while i == 1 or (str(i) in soup.title.string):
         print(soup.title.string.encode("ascii", 'ignore').decode("utf-8"))
         article_texts = soup.findAll(attrs={'data-p-id': True})
@@ -50,8 +46,16 @@ if __name__ == '__main__':
         story.append(chapter)
 
         i += 1
-        page = URL + f'/page/{i}'
+        page = url + f'/page/{i}'
         soup = parse_soup(page)
+    return title, story
+
+
+if __name__ == '__main__':
+    url = argv[1]
+
+    soup = parse_soup(url)
+    title, story = get_story(soup)
 
     with open(f"{title}.txt", 'w', encoding='utf8') as FH:
         FH.writelines(story)

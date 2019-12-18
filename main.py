@@ -4,11 +4,14 @@ from flask import request, render_template
 app = flask.Flask(__name__)
 
 
+@app.route('/download-txt')
+def download_txt():
+    url = request.form['url']
+
+
+
 @app.route('/')
 def index():
-    if request.method == 'POST':
-        pass
-
     return render_template('index.html')
 
 
