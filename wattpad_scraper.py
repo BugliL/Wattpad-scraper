@@ -35,12 +35,12 @@ def parse_soup(url):
     return BeautifulSoup(html_content, 'html.parser')
 
 
-def get_story(soup):
+def get_story(url, soup):
     story = []
     i = 1
     title = str(soup.title.string).encode("ascii", 'ignore').decode("utf-8").partition("-")[0].strip()
     while i == 1 or (str(i) in soup.title.string):
-        print(soup.title.string.encode("ascii", 'ignore').decode("utf-8"))
+        # print(soup.title.string.encode("ascii", 'ignore').decode("utf-8"))
         article_texts = soup.findAll(attrs={'data-p-id': True})
         chapter = u"\n".join(html.unescape(t.text).replace(u'\u2022' * 3, '').strip() for t in article_texts)
         story.append(chapter)
@@ -55,7 +55,7 @@ if __name__ == '__main__':
     url = argv[1]
 
     soup = parse_soup(url)
-    title, story = get_story(soup)
+    title, story = get_story(url, soup)
 
     with open(f"{title}.txt", 'w', encoding='utf8') as FH:
         FH.writelines(story)
