@@ -11,11 +11,12 @@ app = flask.Flask(__name__)
 def download_txt():
     url = request.form['url']
     soup = parse_soup(url)
-    title, story = get_story(url, soup)
+    title, story = get_story(soup)
 
     with tempfile.NamedTemporaryFile('w', encoding='utf8', delete=False) as temp:
         temp.writelines(story)
         temp.flush()
+        temp.close()
 
     return send_file(
         temp.name,
